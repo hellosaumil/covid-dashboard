@@ -18,10 +18,6 @@ class CovidStats:
         country_name = country_name.lower()
 
         covid = self.refresh_data() if refresh else self.last_covid_data
-
-        if country_name == "us":
-            return covid.get_status_by_country_id(78)
-
         return covid.get_status_by_country_name(country_name)
 
 
