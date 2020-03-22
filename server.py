@@ -1,5 +1,6 @@
 import os, re, sys, json
 from flask import Flask, request, render_template, send_file, make_response, jsonify, redirect, url_for
+from user_management import load_users, add_user
 
 import flask_login
 
@@ -16,18 +17,19 @@ def dashboardGET():
     return redirect(url_for('dashboard'))
 
 
-# Our mock database.
-users = {
-            'foo@bar.tld': {'password': 'secret'},
-            'saumil': {'password': 'shah'},
-        }
+
 class User(flask_login.UserMixin):
     pass
 
+def get_users():
+    return load_users()
 
 @login_manager.user_loader
 def user_loader(email):
-    if email not in users:
+
+    curr_users = get_users()
+
+    if email not in curr_users.keys():
         return
 
     user = User()
@@ -37,8 +39,11 @@ def user_loader(email):
 
 @login_manager.request_loader
 def request_loader(request):
+
+    curr_users = get_users()
+
     email = request.form.get('email')
-    if email not in users:
+    if email not in curr_users:
         return
 
     user = User()
@@ -46,12 +51,12 @@ def request_loader(request):
 
     # DO NOT ever store passwords in plaintext and always compare password
     # hashes using constant-time comparison!
-    user.is_authenticated = request.form['password'] == users[email]['password']
+    user.is_authenticated = request.form['password'] == curr_users[email]['password']
 
     return user
 
 @app.route('/login', methods=['GET'])
-def login_get():
+def login():
     return '''
            <form action='login_post' method='POST'>
             <input type='text' name='username' id='username' placeholder='username'/>
@@ -68,17 +73,18 @@ def login_get():
             </form>
            '''
 
-@app.route('/login', methods=['POST'])
+@app.route('/login_post', methods=['POST'])
 def login_post():
 
+    curr_users = get_users()
     email = request.form['username']
 
     """ Check if user not in userbase """
-    if email not in users.keys():
+    if email not in curr_users.keys():
         return 'User not found!'
 
 
-    if request.form['password'] == users[email]['password']:
+    if request.form['password'] == curr_users[email]['password']:
         user = User()
         user.id = email
         flask_login.login_user(user)
@@ -112,12 +118,14 @@ def signup_post():
     # TODO: Add username validation here
     if not new_uname:
         return "New Username Empty"
-
+        return redirect(url_for('dashboard'))
 
     print("new_uname: {}, new_pwd: {}".format(new_uname, new_pwd))
 
+    add_user(uname=new_uname, pwd=new_pwd)
+    print('Signed Up')
 
-    return 'Signed Up'
+    return redirect(url_for('dashboard'))
 
 
 @login_manager.unauthorized_handler
