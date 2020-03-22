@@ -12,7 +12,8 @@ class CovidStats():
         self.last_covid_data = self.refresh_data()
 
     def refresh_data(self):
-        return Covid().get_data()
+        return Covid()
+        # .get_data()
 
     def list_countries(self):
         return self.last_covid_data.list_countries()
