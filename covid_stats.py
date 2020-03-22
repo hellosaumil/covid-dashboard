@@ -22,7 +22,11 @@ class CovidStats():
         country_name = country_name.lower()
 
         covid = self.refresh_data() if refresh else self.last_covid_data
-        return covid.get_status_by_country_name(country_name)
+
+        try:
+            return covid.get_status_by_country_name(country_name)
+        except ValueError:
+            return {"msg": "invalid country name"}
 
 
     def get_stats(self, refresh=False):
