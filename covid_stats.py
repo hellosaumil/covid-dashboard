@@ -6,7 +6,7 @@ from covid import Covid
 # italy_cases = covid.get_status_by_country_id(115)
 # italy_cases = covid.get_status_by_country_name("italy")
 
-class CovidStats:
+class CovidStats():
 
     def __init__(self):
         self.last_covid_data = self.refresh()
