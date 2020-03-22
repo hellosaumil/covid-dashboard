@@ -1,8 +1,14 @@
 import os, re, sys, json
+import logging
 from flask import Flask, request, render_template, send_file, make_response, jsonify, redirect, url_for
+
+session_dict = dict()
 from user_management import load_users, add_user
 
 import flask_login
+
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
 
 app = Flask(__name__)
 headers = {'Content-Type' : 'application/json'}
@@ -57,7 +63,11 @@ def request_loader(request):
 
 @app.route('/login', methods=['GET'])
 def login():
-    return '''
+
+    alert=session_dict.get('alert', None)
+    if alert: del session_dict['alert']
+
+    basic_login_form = '''
            <form action='login_post' method='POST'>
             <input type='text' name='username' id='username' placeholder='username'/>
             <input type='password' name='password' id='password' placeholder='password'/>
@@ -71,37 +81,61 @@ def login():
              <input type='password' name='new_password' id='new_password' placeholder='******'/>
              <input type='submit' name='submit'/>
             </form>
-           '''
+    '''
+
+    if not alert or alert == "":
+        return basic_login_form
+    else:
+        return '''<script type="text/javascript">alert("{}");</script>'''.format(alert) + basic_login_form
+
+
+def validate_user(uname=None, pwd=None):
+
+    curr_users = get_users()
+
+    """ Check if user not in userbase """
+    if uname not in curr_users.keys():
+        return False
+
+    if pwd == curr_users[uname]['password']:
+        user = User()
+        user.id = uname
+        flask_login.login_user(user)
+        return True
+
+    return False
 
 @app.route('/login_post', methods=['POST'])
 def login_post():
 
-    curr_users = get_users()
-    email = request.form['username']
-
-    """ Check if user not in userbase """
-    if email not in curr_users.keys():
-        return 'User not found!'
-
-
-    if request.form['password'] == curr_users[email]['password']:
-        user = User()
-        user.id = email
-        flask_login.login_user(user)
+    if validate_user(uname=request.form['username'], pwd=request.form['password']):
         return redirect(url_for('dashboard'))
-
-    return 'Incorrect user/password!'
+    else:
+        return 'Incorrect user/password!'
 
 
 @app.route('/dashboard')
 @flask_login.login_required
 def dashboard():
-    return 'Logged in as: ' + flask_login.current_user.id
+
+    alert=session_dict.get('alert', None)
+    if alert: del session_dict['alert']
+
+    dashboard_basic_html = "<h2> {} </h2>".format("Logged in as: " + flask_login.current_user.id)
+
+
+    if not alert or alert == "":
+        return dashboard_basic_html
+
+    else:
+        return '''<script type="text/javascript">alert("{}");</script>'''.format(alert) + dashboard_basic_html
 
 @app.route('/logout')
 def logout():
     flask_login.logout_user()
-    return 'Logged out'
+    # return 'Logged out'
+    session_dict["alert"] = "Logged out"
+    return redirect(url_for('login'))
 
 @app.route('/signup', methods=["GET"])
 def signup_get():
@@ -117,13 +151,24 @@ def signup_post():
 
     # TODO: Add username validation here
     if not new_uname:
-        return "New Username Empty"
+        session_dict["alert"] = "New Username Empty"
         return redirect(url_for('dashboard'))
 
-    print("new_uname: {}, new_pwd: {}".format(new_uname, new_pwd))
+    curr_users = load_users()
+    if new_uname in curr_users.keys():
+        print("Username already taken!")
+        session_dict["alert"] = "Username already taken!"
+        return redirect(url_for('login'))
 
-    add_user(uname=new_uname, pwd=new_pwd)
-    print('Signed Up')
+    print("new_uname: {}, new_pwd: {}".format(new_uname, new_pwd))
+    add_callback_result = add_user(uname=new_uname, pwd=new_pwd)
+
+    if validate_user(uname=new_uname, pwd=new_pwd):
+        print('Signed Up')
+        session_dict["alert"] = add_callback_result
+    else:
+        print("Signup Failed")
+        session_dict["alert"] = "Signup Failed"
 
     return redirect(url_for('dashboard'))
 
