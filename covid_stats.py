@@ -18,7 +18,7 @@ class CovidStats():
     def list_countries(self):
         return self.last_covid_data.list_countries()
 
-    def country_stats(self, country_name="italy", refresh=False):
+    def country_stat(self, country_name="italy", refresh=False):
         country_name = country_name.lower()
 
         covid = self.refresh_data() if refresh else self.last_covid_data
