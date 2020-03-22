@@ -9,7 +9,7 @@ from covid import Covid
 class CovidStats():
 
     def __init__(self):
-        self.last_covid_data = self.refresh()
+        self.last_covid_data = self.refresh_data()
 
     def refresh_data(self):
         return Covid().get_data()
