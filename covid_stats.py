@@ -29,7 +29,7 @@ class CovidStats():
                 return covid.get_status_by_country_name(country_name)
 
         except ValueError:
-            return {"status": "invalid", "msg": "Invalid Country Name"}
+            return {"id": "-1", "msg": "Invalid Country Name/ID"}
 
 
     def get_stats(self, refresh=False):
