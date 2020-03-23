@@ -13,7 +13,9 @@ class CovidStats():
 
     def refresh_data(self):
         return Covid()
-        # .get_data()
+
+    def world_data(self):
+        return self.last_covid_data.get_data()
 
     def list_countries(self):
         return self.last_covid_data.list_countries()
@@ -23,7 +25,7 @@ class CovidStats():
 
         if country_id != -1:
             try: return covid.get_status_by_country_id(country_id)
-            except Exception as e:
+            except Exception:
                 return {"id": "-1", "msg": "Invalid Country ID"}
 
         else:
@@ -45,3 +47,9 @@ class CovidStats():
         deaths = covid.get_total_deaths()
 
         print("\nTotal Confirmed: {}\nActive Cases: {}\nRecovered Cases: {}\nDeaths: {}\n".format(confirmed, active, recovered, deaths))
+
+        return { "active": active,
+                "confirmed": confirmed,
+                "deaths": deaths,
+                "recovered": recovered
+                }

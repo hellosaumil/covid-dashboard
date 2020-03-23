@@ -2,15 +2,14 @@ import os, re, sys, json
 import logging
 from flask import Flask, request, render_template, send_file, make_response, jsonify, redirect, url_for
 from flask_cors import CORS, cross_origin
+from apscheduler.schedulers.background import BackgroundScheduler
+import flask_login
 
 from covid_stats import CovidStats
+import user_management as UAM
 
-from apscheduler.schedulers.background import BackgroundScheduler
 
 session_dict = dict()
-from user_management import load_users, add_user
-
-import flask_login
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
@@ -34,16 +33,15 @@ def dashboardGET():
 class User(flask_login.UserMixin):
     pass
 
-def get_users():
-    return load_users()
-
 def validate_user(uname=None, pwd=None):
 
-    curr_users = get_users()
+    curr_users = UAM.load_users()
 
     """ Check if user not in userbase """
     if uname not in curr_users.keys():
         return False
+
+    print(curr_users[uname])
 
     if pwd == curr_users[uname]['password']:
         user = User()
@@ -56,7 +54,7 @@ def validate_user(uname=None, pwd=None):
 @login_manager.user_loader
 def user_loader(email):
 
-    curr_users = get_users()
+    curr_users = UAM.load_users()
 
     if email not in curr_users.keys():
         return
@@ -68,7 +66,7 @@ def user_loader(email):
 @login_manager.request_loader
 def request_loader(request):
 
-    curr_users = get_users()
+    curr_users = UAM.load_users()
 
     email = request.form.get('email')
     if email not in curr_users:
@@ -116,7 +114,8 @@ def login_post():
     if validate_user(uname=request.form['username'], pwd=request.form['password']):
         return redirect(url_for('dashboard'))
     else:
-        return 'Incorrect user/password!'
+        session_dict["alert"] = "Incorrect user/password!"
+        return redirect(url_for('login'))
 
 @app.route('/logout')
 @cross_origin()
@@ -144,14 +143,14 @@ def signup_post():
         session_dict["alert"] = "New Username Empty"
         return redirect(url_for('dashboard'))
 
-    curr_users = load_users()
+    curr_users = UAM.load_users()
     if new_uname in curr_users.keys():
         print("Username already taken!")
         session_dict["alert"] = "Username already taken!"
         return redirect(url_for('login'))
 
     print("new_uname: {}, new_pwd: {}".format(new_uname, new_pwd))
-    add_callback_result = add_user(uname=new_uname, pwd=new_pwd)
+    add_callback_result = UAM.add_user(uname=new_uname, pwd=new_pwd)
 
     if validate_user(uname=new_uname, pwd=new_pwd):
         print('Signed Up')
@@ -198,12 +197,24 @@ def get_county_by_id(c_id):
 def get_county_by_name(c_name):
     return json.dumps( global_covid.country_stat(country_name=c_name, refresh=True) )
 
+@app.route('/user-records', methods=["GET"])
+@cross_origin()
+@flask_login.login_required
+def get_user_interested_countries():
+
+    interested_countries = UAM.get_interest_countries(target_uname=flask_login.current_user.id)
+    return json.dumps({"user_records": [global_covid.country_stat(country) for country in interested_countries]})
+
+
 def scheduled_job():
     print("\nTimed Execution...")
 
 if __name__ == '__main__':
 
     global_covid = CovidStats()
+
+    UAM.init_users()
+    UAM.init_user_records()
 
     # TODO: Scheduler
     # scheduler = BackgroundScheduler()

@@ -1,11 +1,34 @@
 import os, re, sys, json
 
 USER_DATABASE_PATH = "./data/users_credentials.json"
+USER_INTEREST_DATA_PATH = "./data/users_covid_interests.json"
+
+def init_json_file(json_path):
+    if not os.path.exists(json_path):
+        with open(json_path, "w") as write_file:
+            json.dump({}, write_file, indent=4)
+
+def load_json_file(json_path):
+
+    init_json_file(json_path)
+    with open(json_path, "r") as read_file:
+        return json.load(read_file)
+
+def save_json_file(json_path, data):
+
+    with open(json_path, "w") as write_file:
+        return json.dump(data, write_file, indent=4)
+
+
+
+def init_users():
+    init_json_file(USER_DATABASE_PATH)
 
 def load_users():
+    return load_json_file(USER_DATABASE_PATH)
 
-    with open(USER_DATABASE_PATH, "r") as read_file:
-        return json.load(read_file)
+def save_users(users_dict):
+    save_json_file(USER_DATABASE_PATH, users_dict)
 
 def add_user(uname=None, pwd=None):
 
@@ -16,35 +39,46 @@ def add_user(uname=None, pwd=None):
     existing_users[uname] = {"password": pwd}
 
     save_users(existing_users)
+    create_new_user_record(uname)
+
     return "User {} Registered!".format(uname)
 
-def save_users(users_dict):
-    with open(USER_DATABASE_PATH, "w") as write_file:
-        json.dump(users_dict, write_file, indent=4)
+
+def init_user_records():
+    init_json_file(USER_INTEREST_DATA_PATH)
+
+def load_user_records():
+    return load_json_file(USER_INTEREST_DATA_PATH)
+
+def save_user_records(users_records_dict):
+    save_json_file(USER_INTEREST_DATA_PATH, users_records_dict)
+
+def create_new_user_record(uname=None):
+
+    if not uname:
+        return "Incorrect uname..."
+
+    existing_records = load_user_records()
+    existing_records[uname] = {"countries": []}
+
+    save_user_records(existing_records)
+    return "User Record {} Created!".format(uname)
+
+def add_user_record(uname=None, new_countries=[]):
+
+    existing_records = load_user_records()
+
+    ex_user_record = existing_records[uname]
+    ex_user_record["countries"] = list(set(ex_user_record.get("countries", []) + new_countries))
+
+    save_user_records(existing_records)
+    return "User Record {} Added/Updated!".format(uname)
 
 
-from html.parser import HTMLParser
-from html.entities import name2codepoint
+def get_user_records(target_uname):
 
-class MyHTMLParser(HTMLParser):
-    def handle_starttag(self, tag, attrs):
-        print("Start tag:", tag)
-        for attr in attrs:
-            print("     attr:", attr)
-    def handle_endtag(self, tag):
-        print("End tag  :", tag)
-    def handle_data(self, data):
-        print("Data     :", data)
-    def handle_comment(self, data):
-        print("Comment  :", data)
-    def handle_entityref(self, name):
-        c = chr(name2codepoint[name])
-        print("Named ent:", c)
-    def handle_charref(self, name):
-        if name.startswith('x'):
-            c = chr(int(name[1:], 16))
-        else:
-            c = chr(int(name))
-        print("Num ent  :", c)
-    def handle_decl(self, data):
-        print("Decl     :", data)
+    existing_records = load_user_records()
+    return existing_records[target_uname]
+
+def get_interest_countries(target_uname, user_records=None):
+    return get_user_records(target_uname).get("countries", [])
