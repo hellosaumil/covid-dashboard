@@ -21,15 +21,18 @@ class CovidStats():
     def country_stat(self, country_name=None, country_id=-1, refresh=False):
         covid = self.refresh_data() if refresh else self.last_covid_data
 
-        try:
-            if country_id != -1:
-                return covid.get_status_by_country_id(country_id)
-            else:
+        if country_id != -1:
+            try: return covid.get_status_by_country_id(country_id)
+            except Exception as e:
+                return {"id": "-1", "msg": "Invalid Country ID"}
+
+        else:
+            try:
                 country_name = country_name.lower()
                 return covid.get_status_by_country_name(country_name)
 
-        except ValueError:
-            return {"id": "-1", "msg": "Invalid Country Name/ID"}
+            except ValueError:
+                return {"id": "-1", "msg": "Invalid Country Name"}
 
 
     def get_stats(self, refresh=False):
