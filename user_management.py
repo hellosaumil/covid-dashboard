@@ -74,6 +74,15 @@ def add_user_record(uname=None, new_countries=[]):
     save_user_records(existing_records)
     return "User Record {} Added/Updated!".format(uname)
 
+def remove_user_record(uname=None, remove_countries=[]):
+
+    existing_records = load_user_records()
+
+    ex_user_record = existing_records[uname]
+    ex_user_record["countries"] = list(set(ex_user_record.get("countries", [])).difference(remove_countries))
+
+    save_user_records(existing_records)
+    return "User Record {} Added/Updated after Removed!".format(uname)
 
 def get_user_records(target_uname):
 

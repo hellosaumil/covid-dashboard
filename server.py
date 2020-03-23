@@ -25,6 +25,8 @@ login_manager = flask_login.LoginManager()
 login_manager.init_app(app)
 
 
+get_global = lambda : { **{"id": "0", "country": "Global"}, **global_covid.get_stats(refresh=True)}
+
 @app.route('/', methods=["GET"])
 @cross_origin()
 def dashboardGET():
@@ -184,7 +186,6 @@ def dashboard():
 @cross_origin()
 def get_countires():
     # return json.dumps({"countries": sorted(list(map(lambda x: x['name'], global_covid.list_countries())))})
-
     return json.dumps({"countries": global_covid.list_countries()})
 
 @app.route('/country_id/<c_id>', methods=["GET"])
@@ -197,13 +198,53 @@ def get_county_by_id(c_id):
 def get_county_by_name(c_name):
     return json.dumps( global_covid.country_stat(country_name=c_name, refresh=True) )
 
+
 @app.route('/user-records', methods=["GET"])
 @cross_origin()
-@flask_login.login_required
+# @flask_login.login_required
 def get_user_interested_countries():
 
-    interested_countries = UAM.get_interest_countries(target_uname=flask_login.current_user.id)
-    return json.dumps({"user_records": [global_covid.country_stat(country) for country in interested_countries]})
+    interested_countries = UAM.get_interest_countries(target_uname="saumil")
+    # interested_countries = UAM.get_interest_countries(target_uname=flask_login.current_user.id)
+    return json.dumps({"user_records": [global_covid.country_stat(country) for country in interested_countries] +  [get_global()] })
+
+
+@app.route('/record', methods=["POST"])
+@cross_origin()
+# @flask_login.login_required
+def set_new_user_country():
+
+    c_name = request.json.get("name", None)
+
+    if not c_name:
+        return {"id": -1, "msg": "Invalid Country Name"}
+
+    UAM.add_user_record(uname="saumil", new_countries=[c_name])
+    # UAM.add_user_record(uname=flask_login.current_user.id, new_countries=[c_name])
+
+    interested_countries = UAM.get_interest_countries(target_uname="saumil")
+    # interested_countries = UAM.get_interest_countries(target_uname=flask_login.current_user.id)
+    return json.dumps({"user_records": [global_covid.country_stat(country) for country in interested_countries] +  [get_global()]})
+
+
+@app.route('/remove-record', methods=["POST"])
+@cross_origin()
+# @flask_login.login_required
+def delete_new_user_country():
+
+    c_name = request.json.get("name", None)
+
+    if not c_name:
+        return {"id": -1, "msg": "Invalid Country Name"}
+
+    UAM.remove_user_record(uname="saumil", remove_countries=[c_name])
+    # UAM.add_user_record(uname=flask_login.current_user.id, new_countries=[c_name])
+
+    interested_countries = UAM.get_interest_countries(target_uname="saumil")
+    # interested_countries = UAM.get_interest_countries(target_uname=flask_login.current_user.id)
+    return json.dumps({"user_records": [global_covid.country_stat(country) for country in interested_countries] +  [get_global()]})
+
+
 
 
 def scheduled_job():

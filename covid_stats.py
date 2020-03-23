@@ -46,7 +46,7 @@ class CovidStats():
         recovered = covid.get_total_recovered()
         deaths = covid.get_total_deaths()
 
-        print("\nTotal Confirmed: {}\nActive Cases: {}\nRecovered Cases: {}\nDeaths: {}\n".format(confirmed, active, recovered, deaths))
+        # print("\nTotal Confirmed: {}\nActive Cases: {}\nRecovered Cases: {}\nDeaths: {}\n".format(confirmed, active, recovered, deaths))
 
         return { "active": active,
                 "confirmed": confirmed,
