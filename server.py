@@ -184,7 +184,14 @@ def dashboard():
 @app.route('/countries', methods=["GET"])
 @cross_origin()
 def get_countires():
-    return json.dumps({"countries": list(map(lambda x: x['name'], global_covid.list_countries()))})
+    # return json.dumps({"countries": sorted(list(map(lambda x: x['name'], global_covid.list_countries())))})
+
+    return json.dumps({"countries": global_covid.list_countries()})
+
+@app.route('/country_id/<c_id>', methods=["GET"])
+@cross_origin()
+def get_county_by_id(c_id):
+    return json.dumps( global_covid.country_stat(country_id=int(c_id), refresh=True) )
 
 @app.route('/country/<c_name>', methods=["GET"])
 @cross_origin()
@@ -198,9 +205,10 @@ if __name__ == '__main__':
 
     global_covid = CovidStats()
 
-    scheduler = BackgroundScheduler()
-    job = scheduler.add_job(scheduled_job, 'interval', minutes=1//60)
-    scheduler.start()
+    # TODO: Scheduler
+    # scheduler = BackgroundScheduler()
+    # job = scheduler.add_job(scheduled_job, 'interval', minutes=1//60)
+    # scheduler.start()
 
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0',port=port,threaded=True,debug=True)
