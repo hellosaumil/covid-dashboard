@@ -24,4 +24,4 @@ node_modules
 Icon\r\r
 
 __pycache__/
-Icon
+Icon*

@@ -1,5 +1,23 @@
 {
     "saumil": {
+        "countries": [
+            "Spain",
+            "India",
+            "Italy",
+            "France",
+            "US"
+        ]
+    },
+    "Sangram": {
         "countries": []
+    },
+    "amol": {
+        "countries": []
+    },
+    "Parth": {
+        "countries": [
+            "India",
+            "US"
+        ]
     }
 }

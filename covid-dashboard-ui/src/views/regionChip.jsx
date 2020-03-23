@@ -10,7 +10,7 @@ export default class RegionChip extends React.Component {
             selectedRegions: Store.getSelectedRegions()
         }
     }
-    
+
     componentDidMount() {
         Store.on('region-added', this.addRegion.bind(this));
         Store.on('chip-deleted', this.removeChip.bind(this));
@@ -20,7 +20,7 @@ export default class RegionChip extends React.Component {
         Store.removeListener('region-added', this.addRegion.bind(this));
         Store.removeListener('chip-deleted', this.removeChip.bind(this));
     }
-    
+
     removeChip() {
         this.setState({
             selectedRegions: Store.getSelectedRegions()

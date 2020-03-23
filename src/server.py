@@ -1,6 +1,6 @@
 import os, re, sys, json
 import logging
-from flask import Flask, request, render_template, send_file, make_response, jsonify, redirect, url_for
+from flask import Flask, request, render_template, redirect, url_for
 from flask_cors import CORS, cross_origin
 from apscheduler.schedulers.background import BackgroundScheduler
 import flask_login
@@ -14,8 +14,11 @@ session_dict = dict()
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
-app = Flask(__name__)
-cors = CORS(app)
+app = Flask(__name__,
+            static_folder="../covid-dashboard-ui/build/static",
+            template_folder="../covid-dashboard-ui/build")
+
+cors = CORS(app, support_credentials=True)
 app.config['CORS_HEADERS'] = 'Content-Type'
 
 headers = {'Content-Type' : 'application/json'}
@@ -27,10 +30,18 @@ login_manager.init_app(app)
 
 get_global = lambda : { **{"id": "0", "country": "Global"}, **global_covid.get_stats(refresh=True)}
 
+
+@app.route('/covid')
+@cross_origin()
+@flask_login.login_required
+def covid_dashboard():
+    return render_template('index.html')
+
 @app.route('/', methods=["GET"])
 @cross_origin()
 def dashboardGET():
-    return redirect(url_for('dashboard'))
+    # return redirect(url_for('dashboard'))
+    return redirect(url_for('covid_dashboard'))
 
 class User(flask_login.UserMixin):
     pass
@@ -114,7 +125,8 @@ def login():
 def login_post():
 
     if validate_user(uname=request.form['username'], pwd=request.form['password']):
-        return redirect(url_for('dashboard'))
+        # return redirect(url_for('dashboard'))
+        return redirect(url_for('covid_dashboard'))
     else:
         session_dict["alert"] = "Incorrect user/password!"
         return redirect(url_for('login'))
@@ -161,7 +173,8 @@ def signup_post():
         print("Signup Failed")
         session_dict["alert"] = "Signup Failed"
 
-    return redirect(url_for('dashboard'))
+    # return redirect(url_for('dashboard'))
+    return redirect(url_for('covid_dashboard'))
 
 @login_manager.unauthorized_handler
 def unauthorized_handler():
@@ -185,7 +198,6 @@ def dashboard():
 @app.route('/countries', methods=["GET"])
 @cross_origin()
 def get_countires():
-    # return json.dumps({"countries": sorted(list(map(lambda x: x['name'], global_covid.list_countries())))})
     return json.dumps({"countries": global_covid.list_countries()})
 
 @app.route('/country_id/<c_id>', methods=["GET"])
@@ -204,8 +216,8 @@ def get_county_by_name(c_name):
 # @flask_login.login_required
 def get_user_interested_countries():
 
-    interested_countries = UAM.get_interest_countries(target_uname="saumil")
-    # interested_countries = UAM.get_interest_countries(target_uname=flask_login.current_user.id)
+    # interested_countries = UAM.get_interest_countries(target_uname="saumil")
+    interested_countries = UAM.get_interest_countries(target_uname=flask_login.current_user.id)
     return json.dumps({"user_records": [global_covid.country_stat(country) for country in interested_countries] +  [get_global()] })
 
 
@@ -219,11 +231,11 @@ def set_new_user_country():
     if not c_name:
         return {"id": -1, "msg": "Invalid Country Name"}
 
-    UAM.add_user_record(uname="saumil", new_countries=[c_name])
-    # UAM.add_user_record(uname=flask_login.current_user.id, new_countries=[c_name])
+    # UAM.add_user_record(uname="saumil", new_countries=[c_name])
+    UAM.add_user_record(uname=flask_login.current_user.id, new_countries=[c_name])
 
-    interested_countries = UAM.get_interest_countries(target_uname="saumil")
-    # interested_countries = UAM.get_interest_countries(target_uname=flask_login.current_user.id)
+    # interested_countries = UAM.get_interest_countries(target_uname="saumil")
+    interested_countries = UAM.get_interest_countries(target_uname=flask_login.current_user.id)
     return json.dumps({"user_records": [global_covid.country_stat(country) for country in interested_countries] +  [get_global()]})
 
 
@@ -237,11 +249,11 @@ def delete_new_user_country():
     if not c_name:
         return {"id": -1, "msg": "Invalid Country Name"}
 
-    UAM.remove_user_record(uname="saumil", remove_countries=[c_name])
-    # UAM.add_user_record(uname=flask_login.current_user.id, new_countries=[c_name])
+    # UAM.remove_user_record(uname="saumil", remove_countries=[c_name])
+    UAM.add_user_record(uname=flask_login.current_user.id, new_countries=[c_name])
 
-    interested_countries = UAM.get_interest_countries(target_uname="saumil")
-    # interested_countries = UAM.get_interest_countries(target_uname=flask_login.current_user.id)
+    # interested_countries = UAM.get_interest_countries(target_uname="saumil")
+    interested_countries = UAM.get_interest_countries(target_uname=flask_login.current_user.id)
     return json.dumps({"user_records": [global_covid.country_stat(country) for country in interested_countries] +  [get_global()]})
 
 

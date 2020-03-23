@@ -1,7 +1,7 @@
 import os, re, sys, json
 
-USER_DATABASE_PATH = "./data/users_credentials.json"
-USER_INTEREST_DATA_PATH = "./data/users_covid_interests.json"
+USER_DATABASE_PATH = "../data/users_credentials.json"
+USER_INTEREST_DATA_PATH = "../data/users_covid_interests.json"
 
 def init_json_file(json_path):
     if not os.path.exists(json_path):
